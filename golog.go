@@ -84,7 +84,7 @@ func (l *GoLog) writeServer(records []Log) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authoraztion", l.generateHash())
+	req.Header.Set("Authorization", l.generateHash())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

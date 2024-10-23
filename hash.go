@@ -10,7 +10,7 @@ func (l *GoLog) generateHash() string {
 
 	timestmap := time.Now().Unix()
 
-	key := fmt.Sprintf("%d%s", timestmap, l.config.ServerKey)
+	key := fmt.Sprintf("%d%s", timestmap/10, l.config.ServerKey)
 
 	data := []byte(key)
 
