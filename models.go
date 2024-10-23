@@ -52,14 +52,14 @@ func (l Level) String() string {
 // ==================== //
 
 type Log struct {
-	Level       Level
-	Title       string
-	Message     string
-	UserActions []string
-	HttpPayload map[string]any
-	UserPayload map[string]any
-	Data        map[string]any
-	Media       map[string]any
-	Enviroment  Enviroment
-	CodeTrace   map[string]any
+	Level       Level          `json:"level"`
+	Title       string         `json:"title"`
+	Message     string         `json:"message"`
+	UserActions []string       `json:"user_action"`
+	HttpPayload map[string]any `json:"http_payload"`
+	UserPayload map[string]any `json:"user_payload"`
+	Data        map[string]any `json:"data"`
+	Media       map[string]any `json:"media"`
+	Enviroment  Enviroment     `json:"env"`
+	CodeTrace   map[string]any `json:"code_trace"`
 }

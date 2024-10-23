@@ -76,7 +76,7 @@ func (l *GoLog) writeServer(records []Log) {
 		return
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s://%s:%s", l.config.ServerApiProtocol, l.config.ServerApiHost, l.config.ServerApiPort), bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s://%s:%s/log/create-many", l.config.ServerApiProtocol, l.config.ServerApiHost, l.config.ServerApiPort), bytes.NewBuffer(data))
 	if err != nil {
 
 		fmt.Println("error creating request")
