@@ -3,6 +3,7 @@ package golog
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -24,7 +25,7 @@ func (l *GoLog) handleLogs() {
 
 	var logs []Log
 
-	ticker := time.NewTicker(time.Second * 1)
+	ticker := time.NewTicker(time.Second * 10)
 	defer ticker.Stop()
 
 	for {
@@ -116,7 +117,12 @@ func (l *GoLog) writeServer(records []Log) {
 	req.Header.Set("Authorization", l.generateHash())
 	req.Header.Set("Platform-Name", l.config.ServerPlatfrom)
 
-	client := &http.Client{}
+	// Disable server certificate verification
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 
