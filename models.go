@@ -1,5 +1,7 @@
 package golog
 
+import "fmt"
+
 type Config struct {
 	Enviroment        Enviroment // enviroment `dev`, `test`, `prod`, `local`
 	LogStdout         bool       // print logs in stdout
@@ -63,8 +65,8 @@ type Log struct {
 func (l Log) ToHttpLog() HttpLog {
 
 	record := HttpLog{
-		"enviroment": l.Enviroment,
-		"level":      l.Level,
+		"enviroment": fmt.Sprintf("%d", l.Enviroment),
+		"level":      fmt.Sprintf("%d", l.Level),
 		"title":      l.Title,
 		"message":    l.Message,
 	}

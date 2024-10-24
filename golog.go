@@ -24,7 +24,7 @@ func (l *GoLog) handleLogs() {
 
 	var logs []Log
 
-	ticker := time.NewTicker(time.Second * 10)
+	ticker := time.NewTicker(time.Second * 1)
 	defer ticker.Stop()
 
 	for {
