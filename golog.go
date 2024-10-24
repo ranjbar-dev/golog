@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -22,13 +24,16 @@ func (l *GoLog) handleLogs() {
 
 	var logs []Log
 
+	ticker := time.NewTicker(time.Second * 10)
+	defer ticker.Stop()
+
 	for {
 		select {
 
 		case <-l.ctx.Done():
 			return
 
-		case <-l.dispatchChannel:
+		case <-ticker.C:
 
 			if len(logs) > 0 {
 
@@ -49,7 +54,7 @@ func (l *GoLog) handleLogs() {
 				go l.writeFile(record)
 			}
 
-			if l.config.LogFile {
+			if l.config.LogServer {
 
 				logs = append(logs, record)
 			}
@@ -59,17 +64,41 @@ func (l *GoLog) handleLogs() {
 
 func (l *GoLog) writeStdout(record Log) {
 
-	fmt.Printf("[%s] %s - %s", record.Level.String(), record.Title, record.Message)
+	if record.Data != nil {
+
+		fmt.Printf("%s [%s] %s - %s, data: %v \n", time.Now().Format("2006/01/02 15:04:05"), record.Level.String(), record.Title, record.Message, record.Data)
+		return
+	} else {
+
+		fmt.Printf("%s [%s] %s - %s \n", time.Now().Format("2006/01/02 15:04:05"), record.Level.String(), record.Title, record.Message)
+	}
 }
 
 func (l *GoLog) writeFile(record Log) {
 
-	log.Printf("[%s] %s - %s", record.Level.String(), record.Title, record.Message)
+	if record.Data != nil {
+
+		log.Printf("[%s] %s - %s, data: %v \n", record.Level.String(), record.Title, record.Message, record.Data)
+		return
+	} else {
+
+		log.Printf("[%s] %s - %s \n", record.Level.String(), record.Title, record.Message)
+	}
 }
 
 func (l *GoLog) writeServer(records []Log) {
 
-	data, err := json.Marshal(records)
+	var logs []HttpLog
+	for _, record := range records {
+
+		logs = append(logs, record.ToHttpLog())
+	}
+
+	request := LogsRequest{
+		Logs: logs,
+	}
+
+	data, err := json.Marshal(request)
 	if err != nil {
 
 		fmt.Println("error marshalling logs")
@@ -79,12 +108,13 @@ func (l *GoLog) writeServer(records []Log) {
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s://%s:%s/log/create-many", l.config.ServerApiProtocol, l.config.ServerApiHost, l.config.ServerApiPort), bytes.NewBuffer(data))
 	if err != nil {
 
-		fmt.Println("error creating request")
+		fmt.Println("error creating request", err)
 		return
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", l.generateHash())
+	req.Header.Set("Platform-Name", l.config.ServerPlatfrom)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -97,7 +127,14 @@ func (l *GoLog) writeServer(records []Log) {
 
 	if resp.StatusCode != http.StatusOK {
 
-		fmt.Println("error sending logs status code: ", resp.StatusCode)
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+
+			fmt.Println("error reading response body", err)
+			return
+		}
+
+		fmt.Println("error sending logs status code: ", resp.StatusCode, " body: ", string(body))
 		return
 	}
 }
@@ -113,11 +150,17 @@ func (l *GoLog) SetConfig(config Config) {
 	})
 }
 
-func (l *GoLog) Log(record Log) {
+func (l *GoLog) Log(level Level, title string, message string, data ...any) {
 
 	go func() {
 
-		l.jobsChannel <- record
+		l.jobsChannel <- Log{
+			Enviroment: l.config.Enviroment,
+			Level:      level,
+			Title:      title,
+			Message:    message,
+			Data:       data,
+		}
 	}()
 }
 
@@ -130,7 +173,7 @@ func NewGoLog(ctx context.Context) *GoLog {
 		config:          Config{},
 	}
 
-	GoLog.handleLogs()
+	go GoLog.handleLogs()
 
 	return GoLog
 }

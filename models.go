@@ -1,17 +1,18 @@
 package golog
 
 type Config struct {
-	LogStdout         bool   // print logs in stdout
-	LogFile           bool   // store logs in file
-	FileLocation      string // location to log file
-	FileMaxSize       int    // maximum size in megabytes of the log file before it gets rotated
-	FileMaxBackups    int    // maximum number of old log files to retain
-	LogServer         bool   // send logs to server
-	ServerApiProtocol string // api protocl `https`
-	ServerApiHost     string // api host `api.example.com`
-	ServerApiPort     string // api port `443`
-	ServerPlatfrom    string // platform name in server
-	ServerKey         string // server key
+	Enviroment        Enviroment // enviroment `dev`, `test`, `prod`, `local`
+	LogStdout         bool       // print logs in stdout
+	LogFile           bool       // store logs in file
+	FileLocation      string     // location to log file
+	FileMaxSize       int        // maximum size in megabytes of the log file before it gets rotated
+	FileMaxBackups    int        // maximum number of old log files to retain
+	LogServer         bool       // send logs to server
+	ServerApiProtocol string     // api protocl `https`
+	ServerApiHost     string     // api host `api.example.com`
+	ServerApiPort     string     // api port `443`
+	ServerPlatfrom    string     // platform name in server
+	ServerKey         string     // server key
 }
 
 // ==================== //
@@ -52,14 +53,34 @@ func (l Level) String() string {
 // ==================== //
 
 type Log struct {
-	Level       Level          `json:"level"`
-	Title       string         `json:"title"`
-	Message     string         `json:"message"`
-	UserActions []string       `json:"user_action"`
-	HttpPayload map[string]any `json:"http_payload"`
-	UserPayload map[string]any `json:"user_payload"`
-	Data        map[string]any `json:"data"`
-	Media       map[string]any `json:"media"`
-	Enviroment  Enviroment     `json:"env"`
-	CodeTrace   map[string]any `json:"code_trace"`
+	Enviroment Enviroment
+	Level      Level
+	Title      string
+	Message    string
+	Data       []any
+}
+
+func (l Log) ToHttpLog() HttpLog {
+
+	record := HttpLog{
+		"enviroment": l.Enviroment,
+		"level":      l.Level,
+		"title":      l.Title,
+		"message":    l.Message,
+	}
+
+	if l.Data != nil {
+
+		record["data"] = l.Data
+	}
+
+	return record
+}
+
+// ==================== //
+
+type HttpLog map[string]any
+
+type LogsRequest struct {
+	Logs []HttpLog `json:"logs"`
 }

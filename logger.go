@@ -7,6 +7,7 @@ import (
 var Logger *GoLog
 
 var defaultConfig = Config{
+	Enviroment:        Local,
 	LogStdout:         true,
 	LogFile:           true,
 	FileLocation:      "/var/log/golog.log",
