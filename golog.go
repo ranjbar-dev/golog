@@ -169,6 +169,41 @@ func (l *GoLog) Log(level Level, title string, message string, data ...any) {
 	}(level, title, message, data...)
 }
 
+func (l *GoLog) Trace(title string, message string, data ...any) {
+
+	l.Log(Trace, title, message, data...)
+}
+
+func (l *GoLog) Debug(title string, message string, data ...any) {
+
+	l.Log(Debug, title, message, data...)
+}
+
+func (l *GoLog) Info(title string, message string, data ...any) {
+
+	l.Log(Info, title, message, data...)
+}
+
+func (l *GoLog) Warn(title string, message string, data ...any) {
+
+	l.Log(Warn, title, message, data...)
+}
+
+func (l *GoLog) Error(title string, message string, data ...any) {
+
+	l.Log(Error, title, message, data...)
+}
+
+func (l *GoLog) Fatal(title string, message string, data ...any) {
+
+	l.Log(Fatal, title, message, data...)
+}
+
+func (l *GoLog) Panic(title string, message string, data ...any) {
+
+	l.Log(Panic, title, message, data...)
+}
+
 func NewGoLog(ctx context.Context, config Config) *GoLog {
 
 	GoLog := &GoLog{
