@@ -22,7 +22,5 @@ var defaultConfig = Config{
 
 func init() {
 
-	Logger = NewGoLog(context.Background())
-
-	Logger.SetConfig(defaultConfig)
+	Logger = NewGoLog(context.Background(), defaultConfig)
 }

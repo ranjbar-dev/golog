@@ -15,33 +15,31 @@ import (
 )
 
 type GoLog struct {
-	ctx             context.Context
-	jobsChannel     chan Log
-	dispatchChannel chan Log
-	config          Config
+	ctx         context.Context
+	jobsChannel chan Log
+	config      Config
+	logs        []Log
 }
 
 func (l *GoLog) handleLogs() {
 
-	var logs []Log
-
-	ticker := time.NewTicker(time.Second * 10)
+	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
 
 	for {
 		select {
 
 		case <-l.ctx.Done():
+			fmt.Println("golog context done")
 			return
 
 		case <-ticker.C:
 
-			if len(logs) > 0 {
+			if len(l.logs) > 0 {
 
-				go l.writeServer(logs)
-				logs = logs[:0]
+				go l.writeServer(l.logs)
+				l.logs = make([]Log, 0)
 			}
-			return
 
 		case record := <-l.jobsChannel:
 
@@ -57,7 +55,7 @@ func (l *GoLog) handleLogs() {
 
 			if l.config.LogServer {
 
-				logs = append(logs, record)
+				l.logs = append(l.logs, record)
 			}
 		}
 	}
@@ -159,7 +157,7 @@ func (l *GoLog) SetConfig(config Config) {
 
 func (l *GoLog) Log(level Level, title string, message string, data ...any) {
 
-	go func() {
+	go func(level Level, title string, message string, data ...any) {
 
 		l.jobsChannel <- Log{
 			Enviroment: l.config.Enviroment,
@@ -168,16 +166,16 @@ func (l *GoLog) Log(level Level, title string, message string, data ...any) {
 			Message:    message,
 			Data:       data,
 		}
-	}()
+	}(level, title, message, data...)
 }
 
-func NewGoLog(ctx context.Context) *GoLog {
+func NewGoLog(ctx context.Context, config Config) *GoLog {
 
 	GoLog := &GoLog{
-		ctx:             ctx,
-		jobsChannel:     make(chan Log, 1000),
-		dispatchChannel: make(chan Log, 1000),
-		config:          Config{},
+		ctx:         ctx,
+		jobsChannel: make(chan Log, 1000),
+		config:      config,
+		logs:        make([]Log, 0),
 	}
 
 	go GoLog.handleLogs()
