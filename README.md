@@ -1,3 +1,3 @@
-# Golog v1.0.0
+# Golog v1.0.3
 
-log package for team use
+to get latest run `go get github.com/ranjbar-dev/golog`
