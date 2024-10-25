@@ -123,6 +123,7 @@ func (l *GoLog) writeServer(records []Log) {
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 
