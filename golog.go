@@ -17,6 +17,7 @@ import (
 type GoLog struct {
 	ctx         context.Context
 	jobsChannel chan Log
+	doneChannel chan struct{}
 	config      Config
 	logs        []Log
 }
@@ -40,6 +41,10 @@ func (l *GoLog) handleLogs() {
 				go l.writeServer(l.logs)
 				l.logs = make([]Log, 0)
 			}
+
+		case <-l.doneChannel:
+			fmt.Println("golog done channel received")
+			return
 
 		case record := <-l.jobsChannel:
 
@@ -144,6 +149,7 @@ func (l *GoLog) writeServer(records []Log) {
 	}
 }
 
+// SetConfig is used to set the logger configuration
 func (l *GoLog) SetConfig(config Config) {
 
 	l.config = config
@@ -155,6 +161,7 @@ func (l *GoLog) SetConfig(config Config) {
 	})
 }
 
+// Log is used to log a message
 func (l *GoLog) Log(level Level, title string, message string, data ...any) {
 
 	go func(level Level, title string, message string, data ...any) {
@@ -169,46 +176,66 @@ func (l *GoLog) Log(level Level, title string, message string, data ...any) {
 	}(level, title, message, data...)
 }
 
+// Trace is used to log a trace message
 func (l *GoLog) Trace(title string, message string, data ...any) {
 
 	l.Log(Trace, title, message, data...)
 }
 
+// Debug is used to log a debug message
 func (l *GoLog) Debug(title string, message string, data ...any) {
 
 	l.Log(Debug, title, message, data...)
 }
 
+// Info is used to log an info message
 func (l *GoLog) Info(title string, message string, data ...any) {
 
 	l.Log(Info, title, message, data...)
 }
 
+// Warn is used to log a warning message
 func (l *GoLog) Warn(title string, message string, data ...any) {
 
 	l.Log(Warn, title, message, data...)
 }
 
+// Error is used to log an error message
 func (l *GoLog) Error(title string, message string, data ...any) {
 
 	l.Log(Error, title, message, data...)
 }
 
+// Fatal is used to log a fatal message
 func (l *GoLog) Fatal(title string, message string, data ...any) {
 
 	l.Log(Fatal, title, message, data...)
 }
 
+// Panic is used to log a panic message
 func (l *GoLog) Panic(title string, message string, data ...any) {
 
 	l.Log(Panic, title, message, data...)
 }
 
+// Done is used to close the logger and send the logs to the server
+func (l *GoLog) Done() {
+
+	l.doneChannel <- struct{}{}
+	time.Sleep(1 * time.Second)
+	l.writeServer(l.logs)
+	l.logs = make([]Log, 0)
+	close(l.jobsChannel)
+	close(l.doneChannel)
+}
+
+// NewGoLog is used to create a new logger
 func NewGoLog(ctx context.Context, config Config) *GoLog {
 
 	GoLog := &GoLog{
 		ctx:         ctx,
 		jobsChannel: make(chan Log, 1000),
+		doneChannel: make(chan struct{}),
 		config:      config,
 		logs:        make([]Log, 0),
 	}
