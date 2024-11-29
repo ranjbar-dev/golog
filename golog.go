@@ -222,8 +222,12 @@ func (l *GoLog) Panic(title string, message string, data ...any) {
 func (l *GoLog) Done() {
 
 	l.doneChannel <- struct{}{}
-	time.Sleep(1 * time.Second)
-	l.writeServer(l.logs)
+	if l.config.LogFile {
+
+		time.Sleep(1 * time.Second)
+		l.writeServer(l.logs)
+	}
+
 	l.logs = make([]Log, 0)
 	close(l.jobsChannel)
 	close(l.doneChannel)
